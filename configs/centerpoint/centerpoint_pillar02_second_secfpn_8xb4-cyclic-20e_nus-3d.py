@@ -61,8 +61,10 @@ db_sampler = dict(
     points_loader=dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=5,
-        use_dim=[0, 1, 2, 3, 4],
+       #load_dim=5,
+       #use_dim=[0, 1, 2, 3, 4],
+        load_dim=4,
+        use_dim=[0, 1, 2, 3],
         backend_args=backend_args),
     backend_args=backend_args)
 
@@ -70,13 +72,16 @@ train_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=5,
-        use_dim=5,
+        #load_dim=5,
+        #use_dim=5,
+        load_dim=4,
+        use_dim=4,
         backend_args=backend_args),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=9,
-        use_dim=[0, 1, 2, 3, 4],
+        #use_dim=[0, 1, 2, 3, 4],
+        use_dim=[0, 1, 2, 3],
         pad_empty_sweeps=True,
         remove_close=True,
         backend_args=backend_args),
@@ -104,13 +109,16 @@ test_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=5,
-        use_dim=5,
+        #load_dim=5,
+        #use_dim=5,
+        load_dim=4,
+        use_dim=4,
         backend_args=backend_args),
     dict(
         type='LoadPointsFromMultiSweeps',
         sweeps_num=9,
-        use_dim=[0, 1, 2, 3, 4],
+        #use_dim=[0, 1, 2, 3, 4],
+        use_dim=[0, 1, 2, 3],
         pad_empty_sweeps=True,
         remove_close=True,
         backend_args=backend_args),

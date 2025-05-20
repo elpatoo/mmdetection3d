@@ -1,0 +1,10 @@
+createdOn: "23/02/2025 21:04:35"
+runtime: "python"
+model:
+  modelName: "mock"
+  serializedFile: "epoch_40.pth"
+  handler: "mmdet3d_handler.py"
+  modelFile: "config.py"
+  modelVersion: "1.0"
+  configFile: "config.py"
+archiverVersion: "0.12.0"

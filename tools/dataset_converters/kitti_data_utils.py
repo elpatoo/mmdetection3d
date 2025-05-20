@@ -16,6 +16,9 @@ def get_image_index_str(img_idx, use_prefix_id=False):
     else:
         return '{:06d}'.format(img_idx)
 
+#def get_image_index_str(img_idx, use_prefix_id=False): (for first iteration)
+ #   return '{:07d}'.format(img_idx)  # Force 7-digit filenames
+
 
 def get_kitti_info_path(idx,
                         prefix,
@@ -83,6 +86,19 @@ def get_velodyne_path(idx,
     return get_kitti_info_path(idx, prefix, 'velodyne', '.bin', training,
                                relative_path, exist_check, use_prefix_id)
 
+#def get_velodyne_path(idx,  (for first iteration)
+         #             prefix,
+        #              training=True,
+       #               relative_path=True,
+      #                exist_check=True,
+     #                 use_prefix_id=False):
+    #img_idx_str = get_image_index_str(idx, use_prefix_id) + ".bin"
+    #file_path = Path(prefix) / 'points' / img_idx_str
+
+    #if exist_check and not file_path.exists():
+    #    raise ValueError(f'File not exist: {file_path}')
+
+   # return str(file_path) if not relative_path else str(file_path.relative_to(prefix))
 
 def get_calib_path(idx,
                    prefix,
@@ -132,6 +148,7 @@ def get_label_anno(label_path):
     #     content = []
     # else:
     content = [line.strip().split(' ') for line in lines]
+    content = [x for x in content if any(float(val) != 0 for val in x[8:14])] #(added now because of 0 lines)
     num_objects = len([x[0] for x in content if x[0] != 'DontCare'])
     annotations['name'] = np.array([x[0] for x in content])
     num_gt = len(annotations['name'])
@@ -216,6 +233,11 @@ def get_kitti_image_info(path,
         if velodyne:
             pc_info['velodyne_path'] = get_velodyne_path(
                 idx, path, training, relative_path)
+
+        # Only add image info if images exist (for first iteration)
+        #if Path(path, "training/image_2").exists():  
+         #   image_info['image_path'] = get_image_path(idx, path, training, relative_path)        
+
         image_info['image_path'] = get_image_path(idx, path, training,
                                                   relative_path)
         if with_imageshape:

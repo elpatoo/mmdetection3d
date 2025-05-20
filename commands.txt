@@ -1,0 +1,37 @@
+python mmdetection3d/demo/pcd_demo.py dataset/nuscenes_sample.bin mmdetection3d/configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py mmdetection3d/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d_20201021_120719-269f9dd6.pth --show
+
+python mmdetection3d/demo/pcd_demo.py dataset/nuscenes_sample.bin mmdetection3d/configs/centerpoint/centerpoint_voxel01_second_secfpn_8xb4-cyclic-20e_nus-3d.py mmdetection3d/centerpoint_01voxel_second_secfpn_circlenms_4x8_cyclic_20e_nus_20220810_030004-9061688e.pth --show
+
+python mmdetection3d/demo/pcd_demo.py dataset/0000001.bin mmdetection3d/configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py mmdetection3d/checkpoints/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d_20201021_120719-269f9dd6.pth --show
+
+python mmdetection3d/demo/pcd_demo.py dataset/1678357909859614128.bin mmdetection3d/configs/pointpillars/pointpillars_hv_fpn_sbn-all_8xb4-2x_nus-3d.py mmdetection3d/checkpoints/hv_pointpillars_fpn_sbn-all_fp16_2x8_2x_nus-3d_20201021_120719-269f9dd6.pth --show
+
+
+python tools/train.py configs/pointpillars/pointpillars_hv_secfpn_8xb6_custom.py
+
+
+python tools/misc/browse_dataset.py configs/_base_/datasets/custom.py --task lidar_det --output-dir viz
+
+python3 tools/custom_create_data.py --root-path ./data/vargarda --extra-tag custom
+
+python tools/test.py configs/pointpillars/pointpillars_hv_secfpn_8xb6_custom.py work_dirs/pointpillars_hv_secfpn_8xb6_custom/epoch_40.pth
+python tools/test.py configs/pointpillars/pointpillars_hv_secfpn_8xb6_custom.py checkpoints/epoch_20.pth --task lidar_det
+--show --work-dir ./_results
+
+
+
+
+python3 tools/custom_create_data.py --root-path ./data/vargarda --extra-tag custom
+python tools/misc/browse_dataset.py configs/_base_/datasets/custom.py --task lidar_det --output-dir viz
+python tools/test.py configs/pointpillars/pointpillars_hv_secfpn_8xb6_custom.py checkpoints/epoch_20.pth --task lidar_det --show --work-dir ./_results
+python demo/pcd_demo.py data/vargarda/points/0000001.bin configs/pointpillars/pointpillars_hv_secfpn_8xb6_custom.py checkpoints/epoch_20.pth --show
+
+python tools/deployment/mmdet3d2torchserve.py configs/pointpillars/pointpillars_hv_secfpn_8xb6_custom1.py train/epoch_40.pth --output-folder output_dir --model-name mock3
+
+
+export MODEL_CONFIG=../mmdetection3d/configs/pointpillars/pointpillars_hv_secfpn_8xb6_custom.py
+export MODEL_PATH=../mmdetection3d/train/epoch_40.pth
+export TEST_DATA=../mmdetection3d/data/vargarda/points/0000000.bin
+python3 tools/deploy.py configs/mmdet3d/voxel-detection/voxel-detection_onnxruntime_dynamic.py $MODEL_CONFIG $MODEL_PATH $TEST_DATA --work-dir pointpillars
+
+python tools/test.py configs/pointpillars/pointpillars_hv_secfpn_8xb6_custom2.py work_dirs/pointpillars_hv_secfpn_8xb6_custom2/epoch_40.pth --task lidar_det --show --work-dir ./results3

@@ -119,7 +119,7 @@ def _calculate_num_points_in_gt(data_path,
                                 infos,
                                 relative_path,
                                 remove_outside=True,
-                                num_features=4):
+                                num_features=5):  # (because of timestamp)
     for info in mmengine.track_iter_progress(infos):
         pc_info = info['point_cloud']
         image_info = info['image']
@@ -308,7 +308,7 @@ def _create_reduced_point_cloud(data_path,
                                 info_path,
                                 save_path=None,
                                 back=False,
-                                num_features=4,
+                                num_features=5,  #  (because of timestamp)
                                 front_camera_id=2):
     """Create reduced point clouds for given info.
 

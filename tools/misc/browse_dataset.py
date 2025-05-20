@@ -35,6 +35,7 @@ def parse_args():
     parser.add_argument(
         '--aug',
         action='store_true',
+        
         help='Whether to visualize augmented datasets or original dataset.')
     parser.add_argument(
         '--ceph', action='store_true', help='Use ceph as data storage backend')
@@ -139,11 +140,15 @@ def main():
             '3d visualzier',
             data_input,
             data_sample=data_sample,
-            show=not args.not_show,
-            wait_time=args.show_interval,
+            show=True,  # Always show since we're waiting manually
+            wait_time=100,  # Let us control the pause
             out_file=out_file,
             o3d_save_path=o3d_save_path,
             vis_task=vis_task)
+
+        # --- Wait for SPACE key ---
+        # input("Press [SPACE] (then ENTER) to continue, or Ctrl+C to quit...")
+
 
         progress_bar.update()
 

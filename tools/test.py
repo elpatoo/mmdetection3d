@@ -142,8 +142,11 @@ def main():
         runner = RUNNERS.build(cfg)
 
     # start testing
-    runner.test()
-
+    results = runner.test()
+    print("Raw predictions:")
+    for idx, res in enumerate(results):
+        print(f"Sample {idx}:")
+        print(res)
 
 if __name__ == '__main__':
     main()

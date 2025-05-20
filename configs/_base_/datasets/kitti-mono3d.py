@@ -1,6 +1,6 @@
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
-class_names = ['Pedestrian', 'Cyclist', 'Car']
+class_names = ['orange_cone', 'yellow_cone', 'blue_cone', 'big_orange_cone']
 input_modality = dict(use_lidar=False, use_camera=True)
 metainfo = dict(classes=class_names)
 

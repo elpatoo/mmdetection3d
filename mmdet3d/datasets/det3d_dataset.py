@@ -70,7 +70,7 @@ class Det3DDataset(BaseDataset):
     def __init__(self,
                  data_root: Optional[str] = None,
                  ann_file: str = '',
-                 metainfo: Optional[dict] = None,
+                 metainfo: Optional[dict] = ['orange_cone', 'yellow_cone', 'blue_cone', 'big_orange_cone'],
                  data_prefix: dict = dict(pts='velodyne', img=''),
                  pipeline: List[Union[dict, Callable]] = [],
                  modality: dict = dict(use_lidar=True, use_camera=False),
@@ -168,12 +168,20 @@ class Det3DDataset(BaseDataset):
             dict: Annotations after filtering.
         """
         img_filtered_annotations = {}
-        filter_mask = ann_info['gt_labels_3d'] > -1
-        for key in ann_info.keys():
-            if key != 'instances':
-                img_filtered_annotations[key] = (ann_info[key][filter_mask])
+        if 'gt_names' not in ann_info or len(ann_info['gt_names']) == 0:
+            return ann_info
+
+        # create mask that filters out 'DontCare' and empty strings
+        filter_mask = np.logical_and(
+            ann_info['gt_names'] != 'DontCare', ann_info['gt_names'] != '')
+
+        for key in ann_info:
+            value = ann_info[key]
+            if isinstance(value, np.ndarray) and value.shape[0] == filter_mask.shape[0]:
+                img_filtered_annotations[key] = value[filter_mask]
             else:
-                img_filtered_annotations[key] = ann_info[key]
+                img_filtered_annotations[key] = value  # leave untouched if can't be filtered
+
         return img_filtered_annotations
 
     def get_ann_info(self, index: int) -> dict:

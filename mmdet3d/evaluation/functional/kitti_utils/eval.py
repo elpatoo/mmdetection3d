@@ -27,11 +27,18 @@ def get_thresholds(scores: np.ndarray, num_gt, num_sample_pts=41):
     return thresholds
 
 
+#def clean_data(gt_anno, dt_anno, current_class, difficulty):
+    #CLASS_NAMES = ['car', 'pedestrian', 'cyclist']
+    #MIN_HEIGHT = [40, 25, 25]
+    #MAX_OCCLUSION = [0, 1, 2]
+    #MAX_TRUNCATION = [0.15, 0.3, 0.5]
 def clean_data(gt_anno, dt_anno, current_class, difficulty):
-    CLASS_NAMES = ['car', 'pedestrian', 'cyclist']
-    MIN_HEIGHT = [40, 25, 25]
-    MAX_OCCLUSION = [0, 1, 2]
-    MAX_TRUNCATION = [0.15, 0.3, 0.5]
+    # Use your custom classes (all lowercase for consistency)
+    CLASS_NAMES = ['cone_yellow', 'cone_blue', 'cone_orange', 'cone_big']
+    # Set dummy thresholds if you don’t need them (or adjust them as needed)
+    MIN_HEIGHT = [10, 10, 10, 10]
+    MAX_OCCLUSION = [0, 0, 0, 0]
+    MAX_TRUNCATION = [0.0, 0.0, 0.0, 0.0]
     dc_bboxes, ignored_gt, ignored_dt = [], [], []
     current_cls_name = CLASS_NAMES[current_class].lower()
     num_gt = len(gt_anno['name'])
@@ -685,13 +692,20 @@ def kitti_eval(gt_annos,
                             [0.5, 0.25, 0.25, 0.5, 0.25],
                             [0.5, 0.25, 0.25, 0.5, 0.25]])
     min_overlaps = np.stack([overlap_0_7, overlap_0_5], axis=0)  # [2, 3, 5]
+    #class_to_name = {
+     #   0: 'Car',
+      #  1: 'Pedestrian',
+       # 2: 'Cyclist',
+        #3: 'Van',
+        #4: 'Person_sitting',
+    #}
     class_to_name = {
-        0: 'Car',
-        1: 'Pedestrian',
-        2: 'Cyclist',
-        3: 'Van',
-        4: 'Person_sitting',
+        0: 'Cone_Yellow',
+        1: 'Cone_Blue',
+        2: 'Cone_Orange',
+        3: 'Cone_Big',
     }
+
     name_to_class = {v: n for n, v in class_to_name.items()}
     if not isinstance(current_classes, (list, tuple)):
         current_classes = [current_classes]
@@ -889,12 +903,18 @@ def kitti_eval_coco_style(gt_annos, dt_annos, current_classes):
     Returns:
         string: Evaluation results.
     """
+    #class_to_name = {
+        #0: 'Car',
+        #1: 'Pedestrian',
+       # 2: 'Cyclist',
+      #  3: 'Van',
+     #   4: 'Person_sitting',
+    #}
     class_to_name = {
-        0: 'Car',
-        1: 'Pedestrian',
-        2: 'Cyclist',
-        3: 'Van',
-        4: 'Person_sitting',
+        0: 'Cone_Yellow',
+        1: 'Cone_Blue',
+        2: 'Cone_Orange',
+        3: 'Cone_Big',
     }
     class_to_range = {
         0: [0.5, 0.95, 10],

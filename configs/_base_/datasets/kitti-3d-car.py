@@ -31,8 +31,8 @@ db_sampler = dict(
     points_loader=dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
+        load_dim=5,
+        use_dim=5,
         backend_args=backend_args),
     backend_args=backend_args)
 
@@ -67,8 +67,8 @@ test_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
+        load_dim=5,
+        use_dim=5,
         backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
@@ -93,8 +93,8 @@ eval_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
+        load_dim=5,
+        use_dim=5,
         backend_args=backend_args),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
