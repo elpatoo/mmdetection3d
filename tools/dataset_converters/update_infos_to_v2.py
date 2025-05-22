@@ -397,8 +397,9 @@ def update_kitti_infos(pkl_path, out_dir):
     # TODO update to full label
     # TODO discuss how to process 'Van', 'DontCare'
     METAINFO = {
-        'classes': ('Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
-                    'Person_sitting', 'Tram', 'Misc'),
+        'classes': ('orange_cone', 'blue_cone', 'yellow_cone'
+                    #, 'large_orange_cone', 'unknown_cone'
+                    ),
     }
     print(f'Reading from input file: {pkl_path}.')
     data_list = mmengine.load(pkl_path)

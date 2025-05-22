@@ -13,7 +13,9 @@ from mmdet3d.visualization.local_visualizer import Det3DLocalVisualizer
 
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
-class_names = ['Pedestrian', 'Cyclist', 'Car']
+class_names = ['orange_cone', 'blue_cone', 'yellow_cone'
+               #, 'large_orange_cone', 'unknown_cone'
+               ]
 input_modality = dict(use_lidar=False, use_camera=True)
 metainfo = dict(classes=class_names)
 
@@ -62,8 +64,8 @@ eval_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=2,
-    num_workers=2,
+    batch_size=1,
+    num_workers=1,
     persistent_workers=True,
     sampler=dict(type=DefaultSampler, shuffle=True),
     dataset=dict(
@@ -82,7 +84,7 @@ train_dataloader = dict(
         backend_args=backend_args))
 val_dataloader = dict(
     batch_size=1,
-    num_workers=2,
+    num_workers=1,
     persistent_workers=True,
     drop_last=False,
     sampler=dict(type=DefaultSampler, shuffle=False),

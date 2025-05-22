@@ -167,13 +167,19 @@ class Det3DDataset(BaseDataset):
         Returns:
             dict: Annotations after filtering.
         """
+        if 'bbox_labels' not in ann_info or len(ann_info['bbox_labels']) == 0:
+            return ann_info  # skip if nothing to filter
+
+        bbox_labels = ann_info['bbox_labels']
+        filter_mask = bbox_labels != -1
+
         img_filtered_annotations = {}
-        filter_mask = ann_info['gt_labels_3d'] > -1
-        for key in ann_info.keys():
-            if key != 'instances':
-                img_filtered_annotations[key] = (ann_info[key][filter_mask])
+        for key in ann_info:
+            val = ann_info[key]
+            if isinstance(val, np.ndarray) and val.ndim > 0 and len(val) == len(filter_mask):
+                img_filtered_annotations[key] = val[filter_mask]
             else:
-                img_filtered_annotations[key] = ann_info[key]
+                img_filtered_annotations[key] = val  # leave as is
         return img_filtered_annotations
 
     def get_ann_info(self, index: int) -> dict:

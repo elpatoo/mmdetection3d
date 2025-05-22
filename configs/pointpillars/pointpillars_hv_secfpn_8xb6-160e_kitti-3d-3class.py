@@ -7,7 +7,7 @@ _base_ = [
 point_cloud_range = [0, -39.68, -3, 69.12, 39.68, 1]
 # dataset settings
 data_root = 'data/kitti/'
-class_names = ['Pedestrian', 'Cyclist', 'Car']
+class_names = ['orange_cone', 'blue_cone', 'yellow_cone']
 metainfo = dict(classes=class_names)
 backend_args = None
 
@@ -18,13 +18,13 @@ db_sampler = dict(
     rate=1.0,
     prepare=dict(
         filter_by_difficulty=[-1],
-        filter_by_min_points=dict(Car=5, Pedestrian=5, Cyclist=5)),
+        filter_by_min_points=dict(orange_cone=0, blue_cone=0, yellow_cone=0)),
     classes=class_names,
-    sample_groups=dict(Car=15, Pedestrian=15, Cyclist=15),
+    sample_groups=dict(orange_cone=2, blue_cone=2, yellow_cone=2),
     points_loader=dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,
+        load_dim=5,
         use_dim=4,
         backend_args=backend_args),
     backend_args=backend_args)
@@ -34,11 +34,11 @@ train_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,
+        load_dim=5,
         use_dim=4,
         backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
-    dict(type='ObjectSample', db_sampler=db_sampler, use_ground_plane=True),
+    dict(type='ObjectSample', db_sampler=db_sampler, use_ground_plane=False),
     dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
         type='GlobalRotScaleTrans',
@@ -55,7 +55,7 @@ test_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,
+        load_dim=5,
         use_dim=4,
         backend_args=backend_args),
     dict(

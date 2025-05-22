@@ -143,7 +143,7 @@ model = dict(
 # dataset settings
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
-class_names = ['Pedestrian', 'Cyclist', 'Car']
+class_names = ['orange_cone', 'blue_cone', 'yellow_cone']
 metainfo = dict(classes=class_names)
 input_modality = dict(use_lidar=True, use_camera=True)
 backend_args = None
@@ -151,7 +151,7 @@ train_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,
+        load_dim=5,
         use_dim=4,
         backend_args=backend_args),
     dict(type='LoadImageFromFile', backend_args=backend_args),
@@ -178,7 +178,7 @@ test_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,
+        load_dim=5,
         use_dim=4,
         backend_args=backend_args),
     dict(type='LoadImageFromFile', backend_args=backend_args),
@@ -203,8 +203,8 @@ test_pipeline = [
 ]
 modality = dict(use_lidar=True, use_camera=True)
 train_dataloader = dict(
-    batch_size=2,
-    num_workers=2,
+    batch_size=1,
+    num_workers=1,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type='RepeatDataset',

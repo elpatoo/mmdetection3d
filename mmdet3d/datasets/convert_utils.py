@@ -13,8 +13,9 @@ from shapely.geometry.polygon import Polygon
 from mmdet3d.structures import Box3DMode, CameraInstance3DBoxes, points_cam2img
 from mmdet3d.structures.ops import box_np_ops
 
-kitti_categories = ('Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
-                    'Person_sitting', 'Tram', 'Misc')
+kitti_categories = ('orange_cone', 'blue_cone', 'yellow_cone'
+                    #, 'large_orange_cone', 'unknown_cone'
+                    )
 
 waymo_categories = ('Car', 'Pedestrian', 'Cyclist')
 

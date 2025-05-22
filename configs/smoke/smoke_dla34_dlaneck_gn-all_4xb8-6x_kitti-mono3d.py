@@ -32,12 +32,12 @@ test_pipeline = [
 ]
 
 train_dataloader = dict(
-    batch_size=8, num_workers=4, dataset=dict(pipeline=train_pipeline))
+    batch_size=1, num_workers=1, dataset=dict(pipeline=train_pipeline))
 test_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 val_dataloader = dict(dataset=dict(pipeline=test_pipeline))
 
 # training schedule for 6x
-max_epochs = 72
+max_epochs = 2
 train_cfg = dict(
     type='EpochBasedTrainLoop', max_epochs=max_epochs, val_interval=5)
 val_cfg = dict(type='ValLoop')
@@ -50,7 +50,7 @@ param_scheduler = [
         begin=0,
         end=max_epochs,
         by_epoch=True,
-        milestones=[50],
+        milestones=[2],
         gamma=0.1)
 ]
 

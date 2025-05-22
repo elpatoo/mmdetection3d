@@ -1,7 +1,7 @@
 # dataset settings
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
-class_names = ['Pedestrian', 'Cyclist', 'Car']
+class_names = ['orange_cone', 'blue_cone', 'yellow_cone']
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
 input_modality = dict(use_lidar=True, use_camera=False)
 metainfo = dict(classes=class_names)
@@ -27,14 +27,14 @@ db_sampler = dict(
     rate=1.0,
     prepare=dict(
         filter_by_difficulty=[-1],
-        filter_by_min_points=dict(Car=5, Pedestrian=10, Cyclist=10)),
+        filter_by_min_points=dict(orange_cone=5, blue_cone=10, yellow_cone=10)),
     classes=class_names,
-    sample_groups=dict(Car=12, Pedestrian=6, Cyclist=6),
+    sample_groups=dict(orange_cone=12, blue_cone=6, yellow_cone=6),
     points_loader=dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
+        load_dim=5,
+        use_dim=5,
         backend_args=backend_args),
     backend_args=backend_args)
 
@@ -42,8 +42,8 @@ train_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,  # x, y, z, intensity
-        use_dim=4,
+        load_dim=5,  # x, y, z, intensity
+        use_dim=5,
         backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
@@ -69,8 +69,8 @@ test_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
+        load_dim=5,
+        use_dim=5,
         backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
@@ -95,8 +95,8 @@ eval_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=4,
-        use_dim=4,
+        load_dim=5,
+        use_dim=5,
         backend_args=backend_args),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
@@ -158,7 +158,7 @@ test_dataloader = dict(
 val_evaluator = dict(
     type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',
-    metric='bbox',
+    metric=['bbox'],
     backend_args=backend_args)
 test_evaluator = val_evaluator
 

@@ -47,16 +47,17 @@ class KittiDataset(Det3DDataset):
             in `__getitem__`. Defaults to True.
         test_mode (bool): Whether the dataset is in test mode.
             Defaults to False.
-        pcd_limit_range (List[float]): The range of point cloud used to filter
+        pcd_limit_range (List[float]): The range of point clouda used to filter
             invalid predicted boxes.
             Defaults to [0, -40, -3, 70.4, 40, 0.0].
     """
     # TODO: use full classes of kitti
     METAINFO = {
-        'classes': ('Pedestrian', 'Cyclist', 'Car', 'Van', 'Truck',
-                    'Person_sitting', 'Tram', 'Misc'),
-        'palette': [(106, 0, 228), (119, 11, 32), (165, 42, 42), (0, 0, 192),
-                    (197, 226, 255), (0, 60, 100), (0, 0, 142), (255, 77, 255)]
+        'classes': ('orange_cone', 'blue_cone', 'yellow_cone'
+        #, 'large_orange_cone', 'unknown_cone'
+                    ),
+        'palette': [(255, 165, 0), (0, 0, 255), (255, 255, 0)#, (255, 100, 0), (128, 128, 128)
+                    ]
     }
 
     def __init__(self,

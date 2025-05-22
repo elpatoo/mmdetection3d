@@ -148,7 +148,7 @@ def get_label_anno(label_path):
                                         for x in content]).reshape(-1, 3)
     annotations['rotation_y'] = np.array([float(x[14])
                                           for x in content]).reshape(-1)
-    if len(content) != 0 and len(content[0]) == 16:  # have score
+    if len(content) != 0 and all(len(x) == 16 for x in content):  
         annotations['score'] = np.array([float(x[15]) for x in content])
     else:
         annotations['score'] = np.zeros((annotations['bbox'].shape[0], ))

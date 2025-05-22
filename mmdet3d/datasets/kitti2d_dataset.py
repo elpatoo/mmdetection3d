@@ -36,7 +36,9 @@ class Kitti2DDataset(Det3DDataset):
             Defaults to False.
     """
 
-    classes = ('car', 'pedestrian', 'cyclist')
+    classes = ('orange_cone', 'blue_cone', 'yellow_cone'
+               #, 'large_orange_cone', 'unknown_cone'
+               )
     """
     Annotation format:
     [

@@ -13,7 +13,9 @@ from mmdet3d.structures import Det3DDataSample, LiDARInstance3DBoxes
 def _generate_kitti_dataset_config():
     data_root = 'tests/data/kitti'
     ann_file = 'kitti_infos_train.pkl'
-    classes = ['Pedestrian', 'Cyclist', 'Car']
+    classes = ['orange_cone', 'blue_cone', 'yellow_cone'
+               #, 'large_orange_cone', 'unknown_cone'
+               ]
     # wait for pipline refactor
 
     if 'Identity' not in TRANSFORMS:
