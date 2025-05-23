@@ -1,0 +1,15 @@
+python tools/custom_create_data.py --root-path ./data/vargarda --extra-tag custom
+python tools/misc/browse_dataset.py configs/_base_/datasets/custom.py --task lidar_det --output-dir viz
+
+python tools/train.py configs/pointpillars/pointpillars_custom.py
+python tools/train.py configs/parta2/parta2_custom.py
+
+python tools/deployment/mmdet3d2torchserve.py configs/pointpillars/pointpillars_custom.py work_dirs/pointpillars_custom/epoch_20.pth --output-folder output_dir --model-name mock
+
+
+MMDeploy
+
+export MODEL_CONFIG=../configs/pointpillars/pointpillars_custom.py
+export MODEL_PATH=../work_dirs/pointpillars_custom/epoch_20.pth
+export TEST_DATA=../data/vargarda/points/0000000.bin
+python3 tools/deploy.py configs/mmdet3d/voxel-detection/voxel-detection_onnxruntime_dynamic.py $MODEL_CONFIG $MODEL_PATH $TEST_DATA --work-dir pointpillars

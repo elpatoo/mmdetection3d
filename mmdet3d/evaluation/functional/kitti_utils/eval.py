@@ -28,49 +28,42 @@ def get_thresholds(scores: np.ndarray, num_gt, num_sample_pts=41):
 
 
 def clean_data(gt_anno, dt_anno, current_class, difficulty):
-    CLASS_NAMES = ['car', 'pedestrian', 'cyclist']
-    MIN_HEIGHT = [40, 25, 25]
-    MAX_OCCLUSION = [0, 1, 2]
-    MAX_TRUNCATION = [0.15, 0.3, 0.5]
+    # Custom cone classes
+    CLASS_NAMES = ['Cone_Yellow', 'Cone_Blue', 'Cone_Orange', 'Cone_Big']
+    
+    # Set appropriate thresholds (modify if necessary)
+    MIN_HEIGHT = [10, 10, 10, 10]
+    MAX_OCCLUSION = [0, 0, 0, 0]
+    MAX_TRUNCATION = [0.0, 0.0, 0.0, 0.0]
+
     dc_bboxes, ignored_gt, ignored_dt = [], [], []
     current_cls_name = CLASS_NAMES[current_class].lower()
     num_gt = len(gt_anno['name'])
     num_dt = len(dt_anno['name'])
     num_valid_gt = 0
+
     for i in range(num_gt):
         bbox = gt_anno['bbox'][i]
         gt_name = gt_anno['name'][i].lower()
         height = bbox[3] - bbox[1]
-        valid_class = -1
-        if (gt_name == current_cls_name):
-            valid_class = 1
-        elif (current_cls_name == 'Pedestrian'.lower()
-              and 'Person_sitting'.lower() == gt_name):
-            valid_class = 0
-        elif (current_cls_name == 'Car'.lower() and 'Van'.lower() == gt_name):
-            valid_class = 0
-        else:
-            valid_class = -1
-        ignore = False
-        if ((gt_anno['occluded'][i] > MAX_OCCLUSION[difficulty])
-                or (gt_anno['truncated'][i] > MAX_TRUNCATION[difficulty])
-                or (height <= MIN_HEIGHT[difficulty])):
-            ignore = True
+        valid_class = 1 if gt_name == current_cls_name else -1
+        ignore = (gt_anno['occluded'][i] > MAX_OCCLUSION[difficulty] or
+                  gt_anno['truncated'][i] > MAX_TRUNCATION[difficulty] or
+                  height <= MIN_HEIGHT[difficulty])
+
         if valid_class == 1 and not ignore:
             ignored_gt.append(0)
             num_valid_gt += 1
-        elif (valid_class == 0 or (ignore and (valid_class == 1))):
+        elif ignore:
             ignored_gt.append(1)
         else:
             ignored_gt.append(-1)
-    # for i in range(num_gt):
-        if gt_anno['name'][i] == 'DontCare':
+
+        if gt_anno['name'][i].lower() == 'dontcare':
             dc_bboxes.append(gt_anno['bbox'][i])
+
     for i in range(num_dt):
-        if (dt_anno['name'][i].lower() == current_cls_name):
-            valid_class = 1
-        else:
-            valid_class = -1
+        valid_class = 1 if dt_anno['name'][i].lower() == current_cls_name else -1
         height = abs(dt_anno['bbox'][i, 3] - dt_anno['bbox'][i, 1])
         if height < MIN_HEIGHT[difficulty]:
             ignored_dt.append(1)
@@ -680,18 +673,19 @@ def kitti_eval(gt_annos,
         assert 'bbox' in eval_types, 'must evaluate bbox when evaluating aos'
     overlap_0_7 = np.array([[0.7, 0.5, 0.5, 0.7,
                              0.5], [0.7, 0.5, 0.5, 0.7, 0.5],
-                            [0.7, 0.5, 0.5, 0.7, 0.5]])
+                            [0.7, 0.5, 0.5, 0.7, 0.5], [0.7, 0.5, 0.5, 0.7, 0.5]])
     overlap_0_5 = np.array([[0.7, 0.5, 0.5, 0.7, 0.5],
+                            [0.5, 0.25, 0.25, 0.5, 0.25],
                             [0.5, 0.25, 0.25, 0.5, 0.25],
                             [0.5, 0.25, 0.25, 0.5, 0.25]])
     min_overlaps = np.stack([overlap_0_7, overlap_0_5], axis=0)  # [2, 3, 5]
     class_to_name = {
-        0: 'Car',
-        1: 'Pedestrian',
-        2: 'Cyclist',
-        3: 'Van',
-        4: 'Person_sitting',
+        0: 'Cone_Yellow',
+        1: 'Cone_Blue',
+        2: 'Cone_Orange',
+        3: 'Cone_Big',
     }
+
     name_to_class = {v: n for n, v in class_to_name.items()}
     if not isinstance(current_classes, (list, tuple)):
         current_classes = [current_classes]
@@ -890,18 +884,16 @@ def kitti_eval_coco_style(gt_annos, dt_annos, current_classes):
         string: Evaluation results.
     """
     class_to_name = {
-        0: 'Car',
-        1: 'Pedestrian',
-        2: 'Cyclist',
-        3: 'Van',
-        4: 'Person_sitting',
+        0: 'Cone_Yellow',
+        1: 'Cone_Blue',
+        2: 'Cone_Orange',
+        3: 'Cone_Big',
     }
     class_to_range = {
         0: [0.5, 0.95, 10],
         1: [0.25, 0.7, 10],
         2: [0.25, 0.7, 10],
         3: [0.5, 0.95, 10],
-        4: [0.25, 0.7, 10],
     }
     name_to_class = {v: n for n, v in class_to_name.items()}
     if not isinstance(current_classes, (list, tuple)):
