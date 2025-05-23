@@ -24,12 +24,12 @@ backend_args = None
 db_sampler = dict(
     data_root=data_root,
     info_path=data_root + 'kitti_dbinfos_train.pkl',
-    rate=1.0,
-    prepare=dict(
-        filter_by_difficulty=[-1],
-        filter_by_min_points=dict(orange_cone=5, blue_cone=10, yellow_cone=10)),
+    #rate=1.0,
+    #prepare=dict(
+     #   filter_by_difficulty=[-1],
+      #  filter_by_min_points=dict(orange_cone=1, blue_cone=10, yellow_cone=10)),
     classes=class_names,
-    sample_groups=dict(orange_cone=12, blue_cone=6, yellow_cone=6),
+    #sample_groups=dict(orange_cone=12, blue_cone=6, yellow_cone=6),
     points_loader=dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
@@ -84,8 +84,8 @@ test_pipeline = [
                 scale_ratio_range=[1., 1.],
                 translation_std=[0, 0, 0]),
             dict(type='RandomFlip3D'),
-            #dict(
-                #type='PointsRangeFilter', point_cloud_range=point_cloud_range)
+            dict(
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
         ]),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
@@ -101,13 +101,13 @@ eval_pipeline = [
     dict(type='Pack3DDetInputs', keys=['points'])
 ]
 train_dataloader = dict(
-    batch_size=6,
-    num_workers=4,
+    batch_size=4,
+    num_workers=1,
     persistent_workers=True,
     sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
         type='RepeatDataset',
-        times=2,
+        times=1,
         dataset=dict(
             type=dataset_type,
             data_root=data_root,

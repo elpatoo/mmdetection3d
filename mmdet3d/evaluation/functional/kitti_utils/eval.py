@@ -666,209 +666,130 @@ def kitti_eval(gt_annos,
     """KITTI evaluation.
 
     Args:
-        gt_annos (list[dict]): Contain gt information of each sample.
-        dt_annos (list[dict]): Contain detected information of each sample.
-        current_classes (list[str]): Classes to evaluation.
-        eval_types (list[str], optional): Types to eval.
+        gt_annos (list[dict]): List of ground‐truth annotations.
+        dt_annos (list[dict]): List of detection annotations.
+        current_classes (list[str] or list[int]): Classes to evaluate.
+        eval_types (list[str], optional): Which metrics to compute.
             Defaults to ['bbox', 'bev', '3d'].
-
     Returns:
-        tuple: String and dict of evaluation results.
+        tuple: (result_str, ret_dict)
     """
     assert len(eval_types) > 0, 'must contain at least one evaluation type'
-    if 'aos' in eval_types:
-        assert 'bbox' in eval_types, 'must evaluate bbox when evaluating aos'
-    overlap_uniform = np.array([[0.5, 0.5, 0.5]])
-    min_overlaps   = np.stack([overlap_uniform, overlap_uniform], axis=0)
-    class_to_name = {
-        0: 'orange_cone',
-        1: 'blue_cone',
-        2: 'yellow_cone',
-    }
-    name_to_class = {v: n for n, v in class_to_name.items()}
-    if not isinstance(current_classes, (list, tuple)):
-        current_classes = [current_classes]
-    current_classes_int = []
-    for curcls in current_classes:
-        if isinstance(curcls, str):
-            current_classes_int.append(name_to_class[curcls])
-        else:
-            current_classes_int.append(curcls)
-    current_classes = current_classes_int
-    min_overlaps = min_overlaps[:, :, current_classes]
-    result = ''
-    # check whether alpha is valid
-    compute_aos = False
-    pred_alpha = False
-    valid_alpha_gt = False
-    for anno in dt_annos:
-        mask = (anno['alpha'] != -10)
-        if anno['alpha'][mask].shape[0] != 0:
-            pred_alpha = True
-            break
-    for anno in gt_annos:
-        if anno['alpha'][0] != -10:
-            valid_alpha_gt = True
-            break
-    compute_aos = (pred_alpha and valid_alpha_gt)
-    if compute_aos:
+
+    # ——— decide whether to add 'aos' ———
+    pred_alpha = any((anno['alpha'] != -10).any() for anno in dt_annos)
+    valid_alpha_gt = any(anno['alpha'].size and anno['alpha'][0] != -10
+                         for anno in gt_annos)
+    if pred_alpha and valid_alpha_gt:
         eval_types.append('aos')
 
-    mAP11_bbox, mAP11_bev, mAP11_3d, mAP11_aos, mAP40_bbox, mAP40_bev, \
-        mAP40_3d, mAP40_aos = do_eval(gt_annos, dt_annos,
-                                      current_classes, min_overlaps,
-                                      eval_types)
+    # ——— build IoU thresholds (all 0.5) for each eval_type & class ———
+    num_metrics = len(eval_types)
+    # our three classes
+    if not isinstance(current_classes, (list, tuple)):
+        current_classes = [current_classes]
+    # allow passing string names or ints
+    class_to_name = {0: 'orange_cone', 1: 'blue_cone', 2: 'yellow_cone'}
+    name_to_class = {v: k for k, v in class_to_name.items()}
+    classes_int = []
+    for c in current_classes:
+        classes_int.append(name_to_class[c] if isinstance(c, str) else c)
+    current_classes = classes_int
+    num_classes = len(current_classes)
 
+    # create [2 × num_metrics × num_classes] all‐0.5 array
+    overlap_uniform = np.full((num_metrics, num_classes), 0.5, dtype=np.float64)
+    min_overlaps = np.stack([overlap_uniform, overlap_uniform], axis=0)
+
+    # ——— actually run KITTI eval ———
+    results = do_eval(gt_annos, dt_annos, current_classes, min_overlaps, eval_types)
+    (mAP11_bbox, mAP11_bev, mAP11_3d, mAP11_aos,
+     mAP40_bbox, mAP40_bev, mAP40_3d, mAP40_aos) = results
+
+    # ——— format outputs ———
+    result = '\n----------- AP11 Results ------------\n\n'
     ret_dict = {}
     difficulty = ['easy', 'moderate', 'hard']
 
-    # calculate AP11
-    result += '\n----------- AP11 Results ------------\n\n'
-    for j, curcls in enumerate(current_classes):
-        # mAP threshold array: [num_minoverlap, metric, class]
-        # mAP result: [num_class, num_diff, num_minoverlap]
-        curcls_name = class_to_name[curcls]
-        for i in range(min_overlaps.shape[0]):
-            # prepare results for print
-            result += ('{} AP11@{:.2f}, {:.2f}, {:.2f}:\n'.format(
-                curcls_name, *min_overlaps[i, :, j]))
-            if mAP11_bbox is not None:
-                result += 'bbox AP11:{:.4f}, {:.4f}, {:.4f}\n'.format(
-                    *mAP11_bbox[j, :, i])
-            if mAP11_bev is not None:
-                result += 'bev  AP11:{:.4f}, {:.4f}, {:.4f}\n'.format(
-                    *mAP11_bev[j, :, i])
-            if mAP11_3d is not None:
-                result += '3d   AP11:{:.4f}, {:.4f}, {:.4f}\n'.format(
-                    *mAP11_3d[j, :, i])
-            if compute_aos:
-                result += 'aos  AP11:{:.2f}, {:.2f}, {:.2f}\n'.format(
-                    *mAP11_aos[j, :, i])
+    # per‐class AP11
+    for cls_idx, cls_int in enumerate(current_classes):
+        cls_name = class_to_name[cls_int]
+        for thr_idx in range(min_overlaps.shape[0]):  # strict vs. loose
+            thr = min_overlaps[thr_idx, 0, cls_idx]
+            result += f'{cls_name} AP11@{thr:.2f}:\n'
 
-            # prepare results for logger
-            for idx in range(3):
-                if i == 0:
-                    postfix = f'{difficulty[idx]}_strict'
-                else:
-                    postfix = f'{difficulty[idx]}_loose'
-                prefix = f'KITTI/{curcls_name}'
-                if mAP11_3d is not None:
-                    ret_dict[f'{prefix}_3D_AP11_{postfix}'] =\
-                        mAP11_3d[j, idx, i]
-                if mAP11_bev is not None:
-                    ret_dict[f'{prefix}_BEV_AP11_{postfix}'] =\
-                        mAP11_bev[j, idx, i]
+            if mAP11_bbox is not None:
+                vals = mAP11_bbox[cls_idx, :, thr_idx]
+                result += f'  bbox AP11: {vals[0]:.4f}, {vals[1]:.4f}, {vals[2]:.4f}\n'
+            if mAP11_bev is not None:
+                vals = mAP11_bev[cls_idx, :, thr_idx]
+                result += f'  bev  AP11: {vals[0]:.4f}, {vals[1]:.4f}, {vals[2]:.4f}\n'
+            if mAP11_3d is not None:
+                vals = mAP11_3d[cls_idx, :, thr_idx]
+                result += f'  3d   AP11: {vals[0]:.4f}, {vals[1]:.4f}, {vals[2]:.4f}\n'
+            if 'aos' in eval_types:
+                vals = mAP11_aos[cls_idx, :, thr_idx]
+                result += f'  aos  AP11: {vals[0]:.4f}, {vals[1]:.4f}, {vals[2]:.4f}\n'
+
+            # log into ret_dict
+            for d, diff in enumerate(difficulty):
+                postfix = f'{diff}_{"strict" if thr_idx==0 else "loose"}'
+                prefix = f'KITTI/{cls_name}'
                 if mAP11_bbox is not None:
-                    ret_dict[f'{prefix}_2D_AP11_{postfix}'] =\
-                        mAP11_bbox[j, idx, i]
+                    ret_dict[f'{prefix}_2D_AP11_{postfix}'] = mAP11_bbox[cls_idx, d, thr_idx]
+                if mAP11_bev is not None:
+                    ret_dict[f'{prefix}_BEV_AP11_{postfix}'] = mAP11_bev[cls_idx, d, thr_idx]
+                if mAP11_3d is not None:
+                    ret_dict[f'{prefix}_3D_AP11_{postfix}'] = mAP11_3d[cls_idx, d, thr_idx]
 
-    # calculate mAP11 over all classes if there are multiple classes
-    if len(current_classes) > 1:
-        # prepare results for print
-        result += ('\nOverall AP11@{}, {}, {}:\n'.format(*difficulty))
-        if mAP11_bbox is not None:
-            mAP11_bbox = mAP11_bbox.mean(axis=0)
-            result += 'bbox AP11:{:.4f}, {:.4f}, {:.4f}\n'.format(
-                *mAP11_bbox[:, 0])
-        if mAP11_bev is not None:
-            mAP11_bev = mAP11_bev.mean(axis=0)
-            result += 'bev  AP11:{:.4f}, {:.4f}, {:.4f}\n'.format(
-                *mAP11_bev[:, 0])
-        if mAP11_3d is not None:
-            mAP11_3d = mAP11_3d.mean(axis=0)
-            result += '3d   AP11:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAP11_3d[:,
-                                                                            0])
-        if compute_aos:
-            mAP11_aos = mAP11_aos.mean(axis=0)
-            result += 'aos  AP11:{:.2f}, {:.2f}, {:.2f}\n'.format(
-                *mAP11_aos[:, 0])
+    # overall AP11 (only strict, i.e. thr_idx=0)
+    if num_classes > 1 and mAP11_bbox is not None:
+        overall = mAP11_bbox.mean(axis=0)  # shape [3, 2]
+        strict_vals = overall[:, 0]        # pick the strict column
+        result += '\nOverall AP11:\n'
+        result += f'  bbox AP11: {strict_vals[0]:.4f}, {strict_vals[1]:.4f}, {strict_vals[2]:.4f}\n'
+        for d, diff in enumerate(difficulty):
+            ret_dict[f'KITTI/Overall_2D_AP11_{diff}'] = strict_vals[d]
 
-        # prepare results for logger
-        for idx in range(3):
-            postfix = f'{difficulty[idx]}'
-            if mAP11_3d is not None:
-                ret_dict[f'KITTI/Overall_3D_AP11_{postfix}'] = mAP11_3d[idx, 0]
-            if mAP11_bev is not None:
-                ret_dict[f'KITTI/Overall_BEV_AP11_{postfix}'] =\
-                    mAP11_bev[idx, 0]
-            if mAP11_bbox is not None:
-                ret_dict[f'KITTI/Overall_2D_AP11_{postfix}'] =\
-                    mAP11_bbox[idx, 0]
-
-    # Calculate AP40
+    # AP40 section
     result += '\n----------- AP40 Results ------------\n\n'
-    for j, curcls in enumerate(current_classes):
-        # mAP threshold array: [num_minoverlap, metric, class]
-        # mAP result: [num_class, num_diff, num_minoverlap]
-        curcls_name = class_to_name[curcls]
-        for i in range(min_overlaps.shape[0]):
-            # prepare results for print
-            result += ('{} AP40@{:.2f}, {:.2f}, {:.2f}:\n'.format(
-                curcls_name, *min_overlaps[i, :, j]))
-            if mAP40_bbox is not None:
-                result += 'bbox AP40:{:.4f}, {:.4f}, {:.4f}\n'.format(
-                    *mAP40_bbox[j, :, i])
-            if mAP40_bev is not None:
-                result += 'bev  AP40:{:.4f}, {:.4f}, {:.4f}\n'.format(
-                    *mAP40_bev[j, :, i])
-            if mAP40_3d is not None:
-                result += '3d   AP40:{:.4f}, {:.4f}, {:.4f}\n'.format(
-                    *mAP40_3d[j, :, i])
-            if compute_aos:
-                result += 'aos  AP40:{:.2f}, {:.2f}, {:.2f}\n'.format(
-                    *mAP40_aos[j, :, i])
+    for cls_idx, cls_int in enumerate(current_classes):
+        cls_name = class_to_name[cls_int]
+        for thr_idx in range(min_overlaps.shape[0]):
+            thr = min_overlaps[thr_idx, 0, cls_idx]
+            result += f'{cls_name} AP40@{thr:.2f}:\n'
 
-            # prepare results for logger
-            for idx in range(3):
-                if i == 0:
-                    postfix = f'{difficulty[idx]}_strict'
-                else:
-                    postfix = f'{difficulty[idx]}_loose'
-                prefix = f'KITTI/{curcls_name}'
-                if mAP40_3d is not None:
-                    ret_dict[f'{prefix}_3D_AP40_{postfix}'] =\
-                        mAP40_3d[j, idx, i]
-                if mAP40_bev is not None:
-                    ret_dict[f'{prefix}_BEV_AP40_{postfix}'] =\
-                        mAP40_bev[j, idx, i]
+            if mAP40_bbox is not None:
+                vals = mAP40_bbox[cls_idx, :, thr_idx]
+                result += f'  bbox AP40: {vals[0]:.4f}, {vals[1]:.4f}, {vals[2]:.4f}\n'
+            if mAP40_bev is not None:
+                vals = mAP40_bev[cls_idx, :, thr_idx]
+                result += f'  bev  AP40: {vals[0]:.4f}, {vals[1]:.4f}, {vals[2]:.4f}\n'
+            if mAP40_3d is not None:
+                vals = mAP40_3d[cls_idx, :, thr_idx]
+                result += f'  3d   AP40: {vals[0]:.4f}, {vals[1]:.4f}, {vals[2]:.4f}\n'
+
+            for d, diff in enumerate(difficulty):
+                postfix = f'{diff}_{"strict" if thr_idx==0 else "loose"}'
+                prefix = f'KITTI/{cls_name}'
                 if mAP40_bbox is not None:
-                    ret_dict[f'{prefix}_2D_AP40_{postfix}'] =\
-                        mAP40_bbox[j, idx, i]
+                    ret_dict[f'{prefix}_2D_AP40_{postfix}'] = mAP40_bbox[cls_idx, d, thr_idx]
+                if mAP40_bev is not None:
+                    ret_dict[f'{prefix}_BEV_AP40_{postfix}'] = mAP40_bev[cls_idx, d, thr_idx]
+                if mAP40_3d is not None:
+                    ret_dict[f'{prefix}_3D_AP40_{postfix}'] = mAP40_3d[cls_idx, d, thr_idx]
 
-    # calculate mAP40 over all classes if there are multiple classes
-    if len(current_classes) > 1:
-        # prepare results for print
-        result += ('\nOverall AP40@{}, {}, {}:\n'.format(*difficulty))
-        if mAP40_bbox is not None:
-            mAP40_bbox = mAP40_bbox.mean(axis=0)
-            result += 'bbox AP40:{:.4f}, {:.4f}, {:.4f}\n'.format(
-                *mAP40_bbox[:, 0])
-        if mAP40_bev is not None:
-            mAP40_bev = mAP40_bev.mean(axis=0)
-            result += 'bev  AP40:{:.4f}, {:.4f}, {:.4f}\n'.format(
-                *mAP40_bev[:, 0])
-        if mAP40_3d is not None:
-            mAP40_3d = mAP40_3d.mean(axis=0)
-            result += '3d   AP40:{:.4f}, {:.4f}, {:.4f}\n'.format(*mAP40_3d[:,
-                                                                            0])
-        if compute_aos:
-            mAP40_aos = mAP40_aos.mean(axis=0)
-            result += 'aos  AP40:{:.2f}, {:.2f}, {:.2f}\n'.format(
-                *mAP40_aos[:, 0])
-
-        # prepare results for logger
-        for idx in range(3):
-            postfix = f'{difficulty[idx]}'
-            if mAP40_3d is not None:
-                ret_dict[f'KITTI/Overall_3D_AP40_{postfix}'] = mAP40_3d[idx, 0]
-            if mAP40_bev is not None:
-                ret_dict[f'KITTI/Overall_BEV_AP40_{postfix}'] =\
-                    mAP40_bev[idx, 0]
-            if mAP40_bbox is not None:
-                ret_dict[f'KITTI/Overall_2D_AP40_{postfix}'] =\
-                    mAP40_bbox[idx, 0]
+    # overall AP40 (strict only)
+    if num_classes > 1 and mAP40_bbox is not None:
+        overall40 = mAP40_bbox.mean(axis=0)
+        strict40 = overall40[:, 0]
+        result += '\nOverall AP40:\n'
+        result += f'  bbox AP40: {strict40[0]:.4f}, {strict40[1]:.4f}, {strict40[2]:.4f}\n'
+        for d, diff in enumerate(difficulty):
+            ret_dict[f'KITTI/Overall_2D_AP40_{diff}'] = strict40[d]
 
     return result, ret_dict
+
 
 
 def kitti_eval_coco_style(gt_annos, dt_annos, current_classes):
