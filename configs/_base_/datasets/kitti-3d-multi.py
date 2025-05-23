@@ -1,25 +1,9 @@
-# Copyright (c) OpenMMLab. All rights reserved.
-from mmengine.dataset.dataset_wrapper import RepeatDataset
-from mmengine.dataset.sampler import DefaultSampler
-from mmengine.visualization.vis_backend import LocalVisBackend
-
-from mmdet3d.datasets.kitti_dataset import KittiDataset
-from mmdet3d.datasets.transforms.formating import Pack3DDetInputs
-from mmdet3d.datasets.transforms.loading import (LoadAnnotations3D,
-                                                 LoadPointsFromFile)
-from mmdet3d.datasets.transforms.test_time_aug import MultiScaleFlipAug3D
-from mmdet3d.datasets.transforms.transforms_3d import (  # noqa
-    GlobalRotScaleTrans, ObjectNoise, ObjectRangeFilter, ObjectSample,
-    PointShuffle, PointsRangeFilter, RandomFlip3D)
-from mmdet3d.evaluation.metrics.kitti_metric import KittiMetric
-from mmdet3d.visualization.local_visualizer import Det3DLocalVisualizer
-
 # dataset settings
 dataset_type = 'KittiDataset'
 data_root = 'data/kitti/'
 class_names = ['orange_cone', 'blue_cone', 'yellow_cone']
 point_cloud_range = [0, -40, -3, 70.4, 40, 1]
-input_modality = dict(use_lidar=True, use_camera=False)
+input_modality = dict(use_lidar=True, use_camera=True)
 metainfo = dict(classes=class_names)
 
 # Example to use different file client
@@ -47,7 +31,7 @@ db_sampler = dict(
     classes=class_names,
     sample_groups=dict(orange_cone=12, blue_cone=6, yellow_cone=6),
     points_loader=dict(
-        type=LoadPointsFromFile,
+        type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=5,
         use_dim=5,
@@ -56,74 +40,76 @@ db_sampler = dict(
 
 train_pipeline = [
     dict(
-        type=LoadPointsFromFile,
+        type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=5,  # x, y, z, intensity
         use_dim=5,
         backend_args=backend_args),
-    dict(type=LoadAnnotations3D, with_bbox_3d=True, with_label_3d=True),
-    dict(type=ObjectSample, db_sampler=db_sampler),
+    dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
+    dict(type='ObjectSample', db_sampler=db_sampler),
     dict(
-        type=ObjectNoise,
+        type='ObjectNoise',
         num_try=100,
         translation_std=[1.0, 1.0, 0.5],
         global_rot_range=[0.0, 0.0],
         rot_range=[-0.78539816, 0.78539816]),
-    dict(type=RandomFlip3D, flip_ratio_bev_horizontal=0.5),
+    dict(type='RandomFlip3D', flip_ratio_bev_horizontal=0.5),
     dict(
-        type=GlobalRotScaleTrans,
+        type='GlobalRotScaleTrans',
         rot_range=[-0.78539816, 0.78539816],
         scale_ratio_range=[0.95, 1.05]),
-    dict(type=PointsRangeFilter, point_cloud_range=point_cloud_range),
-    dict(type=ObjectRangeFilter, point_cloud_range=point_cloud_range),
-    dict(type=PointShuffle),
+    dict(type='PointsRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='ObjectRangeFilter', point_cloud_range=point_cloud_range),
+    dict(type='PointShuffle'),
     dict(
-        type=Pack3DDetInputs, keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
+        type='Pack3DDetInputs',
+        keys=['points', 'gt_bboxes_3d', 'gt_labels_3d'])
 ]
 test_pipeline = [
     dict(
-        type=LoadPointsFromFile,
+        type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=5,
         use_dim=5,
         backend_args=backend_args),
     dict(
-        type=MultiScaleFlipAug3D,
+        type='MultiScaleFlipAug3D',
         img_scale=(1333, 800),
         pts_scale_ratio=1,
         flip=False,
         transforms=[
             dict(
-                type=GlobalRotScaleTrans,
+                type='GlobalRotScaleTrans',
                 rot_range=[0, 0],
                 scale_ratio_range=[1., 1.],
                 translation_std=[0, 0, 0]),
-            dict(type=RandomFlip3D),
-            dict(type=PointsRangeFilter, point_cloud_range=point_cloud_range)
+            dict(type='RandomFlip3D'),
+            dict(
+                type='PointsRangeFilter', point_cloud_range=point_cloud_range)
         ]),
-    dict(type=Pack3DDetInputs, keys=['points'])
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 # construct a pipeline for data and gt loading in show function
 # please keep its loading function consistent with test_pipeline (e.g. client)
 eval_pipeline = [
     dict(
-        type=LoadPointsFromFile,
+        type='LoadPointsFromFile',
         coord_type='LIDAR',
         load_dim=5,
         use_dim=5,
         backend_args=backend_args),
-    dict(type=Pack3DDetInputs, keys=['points'])
+    dict(type='Pack3DDetInputs', keys=['points'])
 ]
 train_dataloader = dict(
     batch_size=6,
     num_workers=4,
     persistent_workers=True,
-    sampler=dict(type=DefaultSampler, shuffle=True),
+    sampler=dict(type='DefaultSampler', shuffle=True),
     dataset=dict(
-        type=RepeatDataset,
+        type='RepeatDataset',
         times=2,
         dataset=dict(
-            type=KittiDataset,
+            type=dataset_type,
             data_root=data_root,
             ann_file='kitti_infos_train.pkl',
             data_prefix=dict(pts='training/velodyne'),
@@ -140,9 +126,9 @@ val_dataloader = dict(
     num_workers=1,
     persistent_workers=True,
     drop_last=False,
-    sampler=dict(type=DefaultSampler, shuffle=False),
+    sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
-        type=KittiDataset,
+        type=dataset_type,
         data_root=data_root,
         data_prefix=dict(pts='training/velodyne'),
         ann_file='kitti_infos_val.pkl',
@@ -157,9 +143,9 @@ test_dataloader = dict(
     num_workers=1,
     persistent_workers=True,
     drop_last=False,
-    sampler=dict(type=DefaultSampler, shuffle=False),
+    sampler=dict(type='DefaultSampler', shuffle=False),
     dataset=dict(
-        type=KittiDataset,
+        type=dataset_type,
         data_root=data_root,
         data_prefix=dict(pts='training/velodyne'),
         ann_file='kitti_infos_val.pkl',
@@ -170,12 +156,12 @@ test_dataloader = dict(
         box_type_3d='LiDAR',
         backend_args=backend_args))
 val_evaluator = dict(
-    type=KittiMetric,
+    type='KittiMetric',
     ann_file=data_root + 'kitti_infos_val.pkl',
     metric=['bbox'],
     backend_args=backend_args)
 test_evaluator = val_evaluator
 
-vis_backends = [dict(type=LocalVisBackend)]
+vis_backends = [dict(type='LocalVisBackend')]
 visualizer = dict(
-    type=Det3DLocalVisualizer, vis_backends=vis_backends, name='visualizer')
+    type='Det3DLocalVisualizer', vis_backends=vis_backends, name='visualizer')
