@@ -33,8 +33,8 @@ db_sampler = dict(
     points_loader=dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=5,
-        use_dim=5,
+        load_dim=4,
+        use_dim=4,
         backend_args=backend_args),
     backend_args=backend_args)
 
@@ -42,8 +42,8 @@ train_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=5,  # x, y, z, intensity
-        use_dim=5,
+        load_dim=4,  # x, y, z, intensity
+        use_dim=4,
         backend_args=backend_args),
     dict(type='LoadAnnotations3D', with_bbox_3d=True, with_label_3d=True),
     dict(type='ObjectSample', db_sampler=db_sampler),
@@ -69,8 +69,8 @@ test_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=5,
-        use_dim=5,
+        load_dim=4,
+        use_dim=4,
         backend_args=backend_args),
     dict(
         type='MultiScaleFlipAug3D',
@@ -95,8 +95,8 @@ eval_pipeline = [
     dict(
         type='LoadPointsFromFile',
         coord_type='LIDAR',
-        load_dim=5,
-        use_dim=5,
+        load_dim=4,
+        use_dim=4,
         backend_args=backend_args),
     dict(type='Pack3DDetInputs', keys=['points'])
 ]

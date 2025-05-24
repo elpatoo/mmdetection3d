@@ -861,9 +861,9 @@ class Det3DLocalVisualizer(DetLocalVisualizer):
                     self.view_port)
             self.flag_exit = not self.o3d_vis.poll_events()
             self.o3d_vis.update_renderer()
-            # if not hasattr(self, 'view_control'):
-            #     self.o3d_vis.create_window()
-            #     self.view_control = self.o3d_vis.get_view_control()
+            if not hasattr(self, 'view_control'):
+                 self.o3d_vis.create_window()
+                 self.view_control = self.o3d_vis.get_view_control()
             self.view_port = \
                 self.view_control.convert_to_pinhole_camera_parameters()  # noqa: E501
             if wait_time != -1:

@@ -333,7 +333,7 @@ class LoadPointsFromMultiSweeps(BaseTransform):
 
     def __init__(self,
                  sweeps_num: int = 10,
-                 load_dim: int = 5,
+                 load_dim: int = 4,
                  use_dim: List[int] = [0, 1, 2, 4],
                  backend_args: Optional[dict] = None,
                  pad_empty_sweeps: bool = False,
@@ -587,7 +587,7 @@ class LoadPointsFromFile(BaseTransform):
 
     def __init__(self,
                  coord_type: str,
-                 load_dim: int = 6,
+                 load_dim: int = 4,
                  use_dim: Union[int, List[int]] = [0, 1, 2],
                  shift_height: bool = False,
                  use_color: bool = False,

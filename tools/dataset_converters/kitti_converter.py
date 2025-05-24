@@ -68,7 +68,7 @@ class _NumPointsInGTCalculater:
                  data_path,
                  relative_path,
                  remove_outside=True,
-                 num_features=5,
+                 num_features=4,
                  num_worker=8) -> None:
         self.data_path = data_path
         self.relative_path = relative_path
@@ -121,7 +121,7 @@ def _calculate_num_points_in_gt(data_path,
                                 infos,
                                 relative_path,
                                 remove_outside=True,
-                                num_features=5):
+                                num_features=4):
     for info in mmengine.track_iter_progress(infos):
         pc_info = info['point_cloud']
         image_info = info['image']
@@ -310,7 +310,7 @@ def _create_reduced_point_cloud(data_path,
                                 info_path,
                                 save_path=None,
                                 back=False,
-                                num_features=5,
+                                num_features=4,
                                 front_camera_id=2):
     """Create reduced point clouds for given info.
 
